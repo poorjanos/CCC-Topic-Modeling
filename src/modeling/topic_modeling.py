@@ -1,7 +1,7 @@
-# Helper functions for Latent Dirichlet Allocation
+# Helper functions for topic modeling
 
 
-def compute_coherence_values(dictionary, corpus, texts, limit, start=2, step=3):
+def lda_compute_coherence_values(dictionary, corpus, texts, limit, start=2, step=3):
     """
     LDA: Compute c_v coherence for various number of topics
 
@@ -36,3 +36,12 @@ def compute_coherence_values(dictionary, corpus, texts, limit, start=2, step=3):
         coherence_values.append(coherencemodel.get_coherence())
 
     return model_list, coherence_values
+
+
+def show_topics(n):
+    '''
+    Show topics with n highest weighted words
+    '''
+    top_words = lambda t: [vocab[i] for i in np.argsort(t)[:-num_top_words-1:-1]]
+    topic_words = ([top_words(t) for t in a])
+    return [' '.join(t) for t in topic_words]
