@@ -61,13 +61,24 @@ if __name__ == '__main__':
     
     # Load corpus
     path_data = Path('../../data')
-    df = pd.read_csv(path_data / 'input_data.csv')
+    df = pd.read_csv(path_data / 'processed' / 'input_data.csv')
+    
+
     
     # Run tokenizer
-    df['tokenized'] = df['text'].apply(lambda x: tokenize_1gram(clean(x), model = nlp, ents = ['PER', 'LOC']))
-    df['token_count'] = df['tokenized'].apply(lambda x: len(x))
-    df['tokenized_no_single'] = remove_single(df, 'tokenized')
-    df['tokenized_no_single_count'] = df['tokenized_no_single'].apply(lambda x: len(x))
-    df.to_csv(path_data / 'tokenized1gram_data.csv', index = False)
+    df['tokenized_raw'] = df['text'].apply(lambda x: tokenize_1gram(clean(x), model = nlp, ents = ['PER', 'LOC']))
+    df['tokenized_raw_cnt'] = df['tokenized_raw'].apply(lambda x: len(x))
+    df['tokenized_mults'] = remove_single(df, 'tokenized_raw')
+    df['tokenized_mults_cnt'] = df['tokenized_mults'].apply(lambda x: len(x))
+    
+    # Drop extra stops if available
+    try:
+        extra_stops = pd.read_csv(path_data / 'processed'/ 'extra_stops.csv')
+        df['tokenized_mults_extr'] = df['tokenized_mults'].apply(lambda x: [token for token in x if token not in list(extra_stops['token'])])
+        df['tokenized_mults_extr_cnt'] = df['tokenized_mults_extr'].apply(lambda x: len(x))
+    except:
+        pass
+    
+    df.to_csv(path_data / 'processed' / 'tokenized1gram_data.csv', index = False)
 
 
