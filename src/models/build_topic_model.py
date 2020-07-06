@@ -1,5 +1,8 @@
 # Helper functions for topic modeling
-
+import numpy as np
+import gensim.corpora as corpora
+from gensim import models
+from gensim.models import CoherenceModel
 
 def lda_compute_coherence_values(dictionary, corpus, texts, limit, start=2, step=3):
     """
@@ -38,7 +41,7 @@ def lda_compute_coherence_values(dictionary, corpus, texts, limit, start=2, step
     return model_list, coherence_values
 
 
-def show_topics(n):
+def show_topics(a, num_top_words, vocab):
     '''
     Show topics with n highest weighted words
     '''
