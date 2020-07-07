@@ -48,3 +48,11 @@ def show_topics(a, num_top_words, vocab):
     top_words = lambda t: [vocab[i] for i in np.argsort(t)[:-num_top_words-1:-1]]
     topic_words = ([top_words(t) for t in a])
     return [' '.join(t) for t in topic_words]
+
+
+def drop_topics(w, h, drop_list):
+    '''
+    Drop topics from NMF model
+    '''
+    keeps = [i for i in range(w.shape[1]) if i not in drop_list]
+    return w[:, keeps], h[keeps, :]
