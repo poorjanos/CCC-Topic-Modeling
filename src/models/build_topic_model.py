@@ -66,6 +66,7 @@ def sparse_argsort(arr):
     indices = np.nonzero(arr)[0]
     return indices[np.argsort(arr[indices])]
 
+
 def get_topic_patterns(dtm, topic_names, threshold=0):
     '''
     Extract topic patterns from doc-topic matrix returned by NMF
@@ -88,7 +89,7 @@ def get_topic_patterns(dtm, topic_names, threshold=0):
     
     # Extract topic patterns
     topic_patterns = [sparse_argsort(i) for i in masked_dtm]
-    topic_patterns = [tuple(np.array(topic_names)[i]) for i in topic_patterns]
+    topic_patterns = [tuple(np.sort(np.array(topic_names)[i])) for i in topic_patterns]
     
     # Add to df and compute frequency metrics
     topic_patterns_df = pd.DataFrame()
@@ -99,4 +100,4 @@ def get_topic_patterns(dtm, topic_names, threshold=0):
     topic_freq['pct'] = topic_freq['count']/sum(topic_freq['count'])
     topic_freq['pct roll'] = topic_freq['count'].cumsum()/sum(topic_freq['count'])
     
-    return topic_freq
+    return topic_freq, topic_patterns_df
