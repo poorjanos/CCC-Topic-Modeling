@@ -1,6 +1,7 @@
 # Helper functions for topic modeling
 import numpy as np
 import pandas as pd
+from collections import Counter
 import gensim.corpora as corpora
 from gensim import models
 from gensim.models import CoherenceModel
@@ -62,6 +63,7 @@ def drop_topics(w, h, drop_list):
 def sparse_argsort(arr):
     '''
     Argsort for 1D array ignoring zeros
+    Returns empty array if all elements are 0
     '''
     indices = np.nonzero(arr)[0]
     return indices[np.argsort(arr[indices])]
@@ -76,11 +78,12 @@ def get_topic_patterns(dtm, topic_names, threshold=0):
     ----------
     dtm : doc-topic matrix from NMF
     threshold: min weight for topic to be picked up
-    lut: look-up table for topic names
+    topic_names: look-up table for topic names
     
     Returns:
     -------
-    Pandas df with topic patterns and frequency metrics
+    topic_patterns: Pandas df with topic pattern for each doc
+    patterns_stats: Pandas df with aggregated measures of topic pattern distribution
     '''
     
     # Set limit for topic weigth and zero out topics below
@@ -88,16 +91,82 @@ def get_topic_patterns(dtm, topic_names, threshold=0):
     masked_dtm = np.where(mask, dtm, 0)
     
     # Extract topic patterns
-    topic_patterns = [sparse_argsort(i) for i in masked_dtm]
-    topic_patterns = [tuple(np.sort(np.array(topic_names)[i])) for i in topic_patterns]
+    patterns = [sparse_argsort(i) for i in masked_dtm]
+    patterns = [tuple(np.sort(np.array(topic_names)[i])) for i in patterns]
     
     # Add to df and compute frequency metrics
-    topic_patterns_df = pd.DataFrame()
-    topic_patterns_df['pattern'] = topic_patterns
+    topic_patterns = pd.DataFrame()
+    topic_patterns['pattern'] = patterns
     
-    topic_freq = topic_patterns_df.groupby(['pattern']).size().reset_index(name = 'count')\
+    patterns_stats = topic_patterns.groupby(['pattern']).size().reset_index(name = 'count')\
             .sort_values(by=['count'], ascending = False).reset_index(drop = True)
-    topic_freq['pct'] = topic_freq['count']/sum(topic_freq['count'])
-    topic_freq['pct roll'] = topic_freq['count'].cumsum()/sum(topic_freq['count'])
+    patterns_stats['pct'] = patterns_stats['count']/sum(patterns_stats['count'])
+    patterns_stats['pct roll'] = patterns_stats['count'].cumsum()/sum(patterns_stats['count'])
+    patterns_stats.set_index('pattern', inplace = True)
     
-    return topic_freq, topic_patterns_df
+    return topic_patterns, patterns_stats
+
+
+def get_topic_frequency(dtm, topic_names, threshold=0):
+    '''
+    Extract how frequently a topic occurs in corpus from doc-topic matrix returned by NMF
+    Filters non-relevant topics by threshold
+    
+    Parameters:
+    ----------
+    dtm : doc-topic matrix from NMF
+    threshold: min weight for topic to be picked up
+    topic_names: look-up table for topic names
+    
+    Returns:
+    -------
+    Pandas df with topic frequency metrics
+    '''
+    
+    # Set limit for topic weigth and zero out topics below
+    mask = dtm >= threshold
+    masked_dtm = np.where(mask, dtm, 0)
+    
+    # Extract topic frequency
+    topic_patterns = [sparse_argsort(i) for i in masked_dtm]
+    topic_patterns = [np.array(topic_names)[i] for i in topic_patterns]
+    topic_patterns_flat = [item for sublist in topic_patterns for item in sublist]
+    counts = pd.DataFrame.from_dict(Counter(topic_patterns_flat), orient='index', columns = ['count'])
+    counts['pct'] = counts['count']/sum(counts['count'])
+    counts.sort_values(by=['count'], ascending = False, inplace = True)
+    
+    return counts
+
+
+
+def get_main_topic(dtm, topic_names, threshold=0):
+    '''
+    Extract the dominant topic for each doc in doc-topic matrix returned by NMF
+    Filters non-relevant topics by threshold
+    
+    Parameters:
+    ----------
+    dtm : doc-topic matrix from NMF
+    threshold: min weight for topic to be picked up
+    topic_names: look-up table for topic names
+    
+    Returns:
+    -------
+    main_topic: Pandas df with main topic for each doc
+    main_stas: Pandas df with aggregated measures of main topic distribution
+    '''
+    mask = dtm >= threshold
+    masked_dtm = np.where(mask, dtm, 0)
+    
+    main_topic = [sparse_argsort(i) for i in masked_dtm]
+    main_topic = [row[len(row)-1] if len(row) > 0 else len(topic_names)-1 for row in main_topic]
+    main_topic = [topic_names[i] for i in main_topic]
+    main_topic = pd.DataFrame(main_topic, columns = ['topic'])
+
+    
+    main_stats = main_topic.groupby(['topic']).size()
+    main_stats = pd.DataFrame(main_stats, columns = ['count']).sort_values(by=['count'], ascending = False)
+    main_stats['pct'] = main_stats['count']/sum(main_stats['count'])
+    main_stats['pct roll'] = main_stats['count'].cumsum()/sum(main_stats['count'])
+    
+    return main_topic, main_stats
