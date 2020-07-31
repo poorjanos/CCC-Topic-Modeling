@@ -134,7 +134,7 @@ class nmfTopicModeler(NMF):
         return main_topic, main_stats
     
     
-    def get_topic_patterns(self, topic_names, threshold=0):
+    def get_topic_patterns(self, topic_names, threshold=0, max_elems=None):
         '''
         Extract topic patterns from doc-topic matrix returned by NMF
         Filters  non-relevant topics by threshold
@@ -142,6 +142,7 @@ class nmfTopicModeler(NMF):
         ----------
         threshold: min weight for topic to be picked up
         topic_names: look-up table for topic names
+        max_elems: limit the number of topics in pattern
         Returns:
         -------
         topic_patterns: Pandas df with topic pattern for each doc
@@ -154,6 +155,8 @@ class nmfTopicModeler(NMF):
 
         # Extract topic patterns
         patterns = [nmfTopicModeler.sparse_argsort(i) for i in masked_dtm]
+        if max_elems:
+            patterns = [i[-max_elems:] for i in patterns]
         patterns = [tuple(np.sort(np.array(topic_names)[i])) for i in patterns]
 
         # Add to df and compute frequency metrics

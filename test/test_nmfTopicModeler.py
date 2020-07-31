@@ -33,6 +33,5 @@ _, main_topic = myNMF.get_main_topic(topic_names = ['pm collection', 'annual', '
 main_topic
 
 # Testing get_topic_patterns method
-_, topic_patterns = myNMF.get_topic_patterns(topic_names = ['pm collection', 'annual', 'arrears sent', 'pm postal', 'pm direct'],\
-                                    threshold = 0.015)
+_, topic_patterns = myNMF.get_topic_patterns(topic_names = ['pm collection', 'annual', 'arrears sent', 'pm postal', 'pmdirect'], threshold = 0.015, max_elems = 2)
 topic_patterns
