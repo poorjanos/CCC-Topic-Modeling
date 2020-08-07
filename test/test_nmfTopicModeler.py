@@ -37,4 +37,4 @@ doc_pattern, topic_patterns = myNMF.get_topic_patterns(topic_names = ['pm collec
 topic_patterns
 
 # Testing fit_submodels method
-doc_sub_patterns, sub_patterns = myNMF.fit_submodels(df['tokenized_mults_extr'], doc_pattern, topn_topics=5, n_tokens=20, n_topics=5, n_words=8, threshold = 0.02)
+doc_sub_patterns, sub_patterns, sub_freqs = myNMF.fit_submodels(df['tokenized_mults_extr'], doc_pattern, topn_topics=5, n_tokens=20, n_topics=5, n_words=8, threshold = 0.02)

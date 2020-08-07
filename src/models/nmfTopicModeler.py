@@ -210,20 +210,28 @@ class nmfTopicModeler(NMF):
         else:
             doc_topic['tokens_sub'] = doc_topic['tokens']
 
-        # Fit models for main topics
+        # Fit submodels
         submodels_stats = {}
         submodel_docs = {}
+        submodel_freqs = {}
         for topic in doc_topic['topic'].unique():
             sub = doc_topic.loc[doc_topic['topic'] == topic, :]
-            topic_mdl_sub = nmfTopicModeler(n_components = n_topics, max_iter = 1000)
+            topic_mdl_sub = nmfTopicModeler(n_components=n_topics, max_iter=1000)
             topic_mdl_sub.fit(sub['tokens_sub'])
+            key_words = topic_mdl_sub.show_topics(n_words)
             
-            doc_sub, sub_mains = topic_mdl_sub.get_main_topic(topic_names = topic_mdl_sub.show_topics(n_words), threshold = threshold)
+            # Extract main topics
+            doc_sub, sub_mains = topic_mdl_sub.get_main_topic(topic_names=key_words, threshold=threshold)
             doc_sub.set_index(sub.index, inplace=True)
+            
+            # Extract topic frequency
+            freqs = topic_mdl_sub.get_topic_frequency(topic_names=key_words, threshold=threshold)
 
             submodels_stats[topic] = sub_mains
             submodel_docs[topic] = doc_sub
+            submodel_freqs[topic] = freqs
             
         submodels_stats = pd.concat(submodels_stats.values(), keys=[str(i) for i in submodels_stats.keys()])
         submodel_docs = pd.concat(submodel_docs.values(), keys=[str(i) for i in submodel_docs.keys()])
-        return submodel_docs, submodels_stats
+        submodel_freqs = pd.concat(submodel_freqs.values(), keys=[str(i) for i in submodel_freqs.keys()])
+        return submodel_docs, submodels_stats, submodel_freqs
